@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset = "UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Trajectory</title>
+		<link rel="stylesheet" type="text/css" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css">
+		<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+		<style type="text/css">
+
+		#map{
+		  height: 400px;
+		}
+		</style>
+	</head>
+	<body>
+
+
+		<h1 class="page-header">True Path Selector</h1>
+		<div id="map"></div>
+		<h2 class="sub-header">Segments</h2>
+		<form id="segments" method="post" action="/truepath/update/">
+			{% csrf_token %}
+			<input type="hidden" name="id" value="{{test.test_id}}" id="key">
+			<input type="submit" name="submit" value="update path" />
+		</form>
+
+
+		
+		<script type="text/javascript" src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		{# // <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script> #}
+		<script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+		{# // <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script> #}
+		{# // <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js"></script> #}
+		{# // <script type="text/javascript" src='{% static "js/tablesort.min.js" %}'></script> #}
+		<script type="text/javascript">
+		$(document).ready(function(){
+			var test_id = $('#key').attr("value");
+			var measurements_url = "/truepath/measurement/"+test_id+"/";
+			var edges_url ="/truepath/edges/"+test_id+"/";
+			var segments_url="/truepath/segments/"+test_id+"/";
+			var mm_segments_url = "/truepath/mm_segments/"+test_id+"/";
+			var projected_url = "/truepath/projected/"+test_id+"/";
+			var map = L.map('map').setView([51.505, -0.09], 11);
+			var edges;
+
+			var path ={
+				edges:new Array(),
+				add:function(edge){
+					if(this.edges.indexOf(edge)==-1){
+						this.edges.push(edge);
+					}
+				},
+				cancel: function(edge){
+					if(this.edges.indexOf(edge)!=-1){
+						this.edges.splice(this.edges.indexOf(edge),1);
+					}
+				}
+			};
+			function highlightFeature(e){
+				var layer = e.target;
+				layer.setStyle({
+					weight:3,
+					color: '#666',
+					fillOpacity:0.7
+				});
+			}
+
+			function resetHighlight(e){
+				edges.resetStyle(e.target);
+			}
+
+			function style(feature){
+				return {
+					weight:4,
+					color:'blue',
+					dashArray:'3'
+				}
+			}
+			function select(e){
+				var layer = e.target;
+				if(!layer.u_selected){
+					layer.setStyle({
+						weight:5,
+						color:'red'
+					});
+					layer.u_selected=true;
+					path.add(layer.feature.properties.id);
+				}
+				else{
+					edges.resetStyle(layer);
+					layer.u_selected=false;
+					path.cancel(layer.feature.properties.id);
+				}
+				updateform(path.edges);
+			}
+
+			function updateform(edge_array){
+				var form = $('#segments');
+				$('input').remove(".edge");
+				for (var i=0; i<edge_array.length; i++){
+					form.append($('<input type="number" name="path[]" value='+edge_array[i]+' class="edge">'));
+				}
+			}
+			// add an OpenStreetMap tile layer
+			var base=L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+			}).addTo(map);
+			var layerswitcher=L.control.layers({'OpenStreetMap':base}).addTo(map);
+			$.getJSON(measurements_url,function(data){
+				var measurements = L.geoJson(data).addTo(map);
+				map.fitBounds(measurements.getBounds());
+				layerswitcher.addOverlay(measurements,'measurements');
+			});
+			// fetch edges
+			$.getJSON(edges_url,function(data){
+				edges = L.geoJson(data,{
+					onEachFeature: function(feature,layer){
+						layer.on({
+							click: select
+						});
+					},
+					style: style
+				}).addTo(map);
+			});
+			// fetch manul selected edges if there is any
+			$.getJSON(segments_url,function(data){
+				var selected_segments=L.geoJson(data,{
+					style:{
+						weight:5,
+						color:'red',
+						opacity:1.0
+					}
+				}).addTo(map);
+				layerswitcher.addOverlay(selected_segments,"manual "+data.length);
+			});
+			// fetch map matching segments
+			$.getJSON(mm_segments_url,function(data){
+				var map_matching = L.geoJson(data,{
+					style:{
+						weight:5,
+						color:'yellow',
+						opacity: 1.0
+					}
+				}).addTo(map);
+				layerswitcher.addOverlay(map_matching,"map matching "+data.length);
+			});
+			// fetch projected points on true route
+			$.getJSON(projected_url,function(data){
+				var true_measurements = L.geoJson(data,{
+					pointToLayer: function(feature, latlng){
+						return L.circleMarker(latlng,{
+							weight:7,
+							color:'#CC6600',
+							opacity: 1.0
+						});
+					}
+				}).addTo(map);
+			});
+		});
+		</script>
+	</body>
+</html>

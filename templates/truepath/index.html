@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Trajectory</title>
+		<link rel="stylesheet" type="text/css" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css">
+		{# <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.4/css/jquery-ui.min.css"> #}
+		<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="{% static 'css/dashboard.css' %}">
+		<style type="text/css">
+		.header {
+			cursor: pointer;
+		}
+		.header:hover{
+			color: #00ffff;
+		} 
+		</style>
+	</head>
+	<body>
+		<script type="text/template" id="route-template">
+			<% _.each(routes, function(route,index){ %>
+				<tr data-id="<%= index %>">
+					<td><%= index+1 %></td>
+					<td><% _.numberFormat(route.possibility,3) %></td>
+					<td><% _.numberFormat(route.RMSE,3) %></td>
+					<td><% _.numberFormat(route.TRMSE,3) %></td>
+					<td><% _.numberFormat(route.area,3) %></td>
+					<td><% _.numberFormat(route.CLength,2) %></td>
+				</tr>
+			<%	});%>
+		</script>
+		<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="#">Trajectory</a>
+				</div>
+				<div class="navbar-collapse collapse">
+					<ul class="nav navbar-nav navbar-right">
+						{% for period in periods %}
+						<li>
+							<a href="#list/{{period}}">{{period}}S</a>
+						</li>
+						{% endfor %}
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-sm-3 col-md-2 sidebar" id="sidebar">
+				</div>
+				<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+					<h1 class="page-header">London Roadmap</h1>
+					<div id="map"></div>
+					<h2 class="sub-header">Predicted routes</h2>
+					<div class="table-responsive">
+						<table class="table table-hover" id="sta-table">
+							<thead class="route-table-header">
+								<tr>
+									<th>#</th>
+									<th class="header">Probability</th>
+									<th class="header">RMSE</th>
+									<th class="header">Spatiotemporal RMSE</th>
+									<th class="header">Enclosing Area</th>
+									<th class="header">Common Length</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				</div>
+			</div>	
+		</div>
+
+
+
+		<script type="text/javascript" src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		{# // <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script> #}
+		<script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js"></script>
+		<script type="text/javascript" src='{% static "js/tablesort.min.js" %}'></script>
+		<script type="text/javascript" src='{% static "js/tra.js" %}'></script>
+	</body>
+</html>

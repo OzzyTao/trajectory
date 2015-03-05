@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>List</title>
+	</head>
+	<body>
+		<ol>
+			{% for test in tests %}
+			<li>
+			<a href="/truepath/{{test.test_id}}/">
+				{% if test.gt_manul_edges %}
+				{{test.gt_manul_edges}}
+				{% else %}
+				undefined
+				{% endif %}
+			</a>
+			</li>
+			{% endfor %}
+		</ol>
+	</body>
+</html>
